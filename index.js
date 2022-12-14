@@ -1,34 +1,27 @@
 const Puppeteer = require('puppeteer');
+const ChessWebAPI = new (require("chess-web-api"))();
+const readlineSync = require("readline-sync");
+const useProxy = require("puppeteer-page-proxy");
+const ProxyManager = new (require("./ProxyManager.js")).ProxyManager();
+const proxyCheck = require("nodejs-proxy-check");
+const {Proxy} = require("./ProxyManager");
 const Process = require("process");
-const ChessWebAPI = new (require('chess-web-api'))();
-const readlineSync = require('readline-sync');
-const useProxy = require('puppeteer-page-proxy');
-const proxyCheck = require('nodejs-proxy-check');
 
 let username;
-
-const proxies = [].map(e => `http://${e}`);
 
 (async () => {
     /*
     username = readlineSync.question( "Enter your Chess.com username: ");
-    const year = readlineSync.question( "Enter what year you want to import games from: ");
-    const month = readlineSync.question( "Enter what month you want to import games from, as a number: ");
-    */
-    for(const e of proxies) {
-        break;
-        const proxy = {
-            host: e.match(/http:\/\/(.*)/)[1].split(":")[0],
-            port: Number(e.match(/http:\/\/(.*)/)[1].split(":")[1]),
-            type: "HTTP"
-        };
-        console.log(proxy)
-        await proxyCheck(proxy).then(r => {
-            console.log(r); // true
-        }).catch(e => {
-            console.error(e); // ECONNRESET
-        });
-    }
+    let year = readlineSync.question( "Enter what year you want to import games from: ");
+    let month = readlineSync.question( "Enter what month you want to import games from, as a number: ");
+*/
+    const useProxies = true;
+    ProxyManager.load("http");
+    const currentProxy = ProxyManager.Pool.getProxy();
+    console.log(ProxyManager.Pool.poolList.length)
+    ProxyManager.Pool.removeProxy(currentProxy);
+    console.log(ProxyManager.Pool.poolList.length)
+    return
 
     username = "Factor101";
     let year = 2022;
@@ -59,9 +52,13 @@ const proxies = [].map(e => `http://${e}`);
     for (const e of games)
     {
         const page = await browser.newPage();
-        await useProxy(page, proxies[Math.floor(Math.random() * proxies.length)]);
+
         console.log(`[x] Analyzing game ${i + 1} of ${games.length} (${((i + 1) / games.length * 100).toString().replace(/(?<=\.)(\d+)(?<=\d{3,})$/, (matched, group) => group.substr(0, 2))} % complete)...`);
-        await page.goto(`https://www.chess.com/analysis/game/live/${e.url.match(/\/(\d+)$/)[1]}?tab=review`);
+        await page.goto(`https://www.chess.com/analysis/game/live/${e.url.match(/\/(\d+)$/)[1]}?tab=review`)
+            .catch(err => {
+                console.log(err.message);
+
+            });
 
         let tries = 0;
         let failed = false;
